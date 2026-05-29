@@ -1,6 +1,6 @@
 flask
-gunicorn
-opencv-python-headless
-mediapipe==0.10.35
-face-recognition
+opencv-python
 numpy
+face_recognition
+gunicorn
+flask-talisman
