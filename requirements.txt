@@ -4,3 +4,6 @@ numpy
 face_recognition
 gunicorn
 flask-talisman
+flask-limiter
+flask-wtf
+python-dotenv
