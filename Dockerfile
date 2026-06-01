@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev 
+    libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install  --upgrade pip
+RUN pip install --no-cache-dir  --upgrade pip
 
 COPY requirements.txt .
 
