@@ -59,6 +59,9 @@ talisman = Talisman(
         'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
         'img-src': ['\'self\'', 'data:']
     },
+    feature_policy={
+        'camera': '\'self\''
+    },
     force_https=False # Set to True in production with SSL
 )
 
@@ -873,6 +876,7 @@ def reset_password():
 # ---------------- FACE LOGIN ---------------- #
 
 @app.route('/face_login', methods=['POST'])
+@limiter.exempt
 def face_login():
 
     global last_name, last_time
@@ -1114,6 +1118,7 @@ def start_demo():
     return render_template('demo.html')
 
 @app.route('/detect_face_api', methods=['POST'])
+@limiter.exempt
 def detect_face_api():
     if not request.json or 'image' not in request.json:
         return jsonify({"status": "fail", "message": "Missing image data"}), 400
