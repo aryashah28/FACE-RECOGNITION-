@@ -305,7 +305,7 @@
             </button>
         </form>
 
-        <a href="/home" class="back-link">← Return to Dashboard</a>
+        <a href="/" class="back-link">← Return to Login</a>
     </div>
 
     <script>
@@ -379,7 +379,7 @@
                     if (streamObj) {
                         streamObj.getTracks().forEach(track => track.stop());
                     }
-                    window.location.href = "/home";
+                    window.location.href = "/";
                 } else {
                     status.innerText = "❌ Fail";
                     status.style.color = "#ef4444";
