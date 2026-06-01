@@ -621,9 +621,6 @@ def search_attendance():
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("10 per hour")
 def register():
-    if "user" not in session or session["user"].lower() != "admin":
-        return redirect("/")
-
     if request.method == 'GET':
         return render_template('register.html')
 
@@ -681,16 +678,13 @@ def register():
             if not face_locations:
                 return jsonify({"status": "fail", "message": "No face detected in the photo. Please align your face and try again."}), 400
                 
-            # Crop face (first one found)
-            (top, right, bottom, left) = face_locations[0]
-            face_img = frame[top:bottom, left:right]
-            
             if not os.path.exists(dataset_path):
                 os.makedirs(dataset_path)
                 
             file_name = f"{name}_1.jpg"
             file_path = os.path.join(dataset_path, file_name)
-            cv2.imwrite(file_path, face_img)
+            # Save the full frame to allow face_recognition to reliably detect and encode the face
+            cv2.imwrite(file_path, frame)
             
         except Exception as e:
             return jsonify({"status": "fail", "message": f"Error capturing face: {str(e)}"}), 500
