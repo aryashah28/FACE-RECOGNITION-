@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision ID - AI Facial Recognition</title>
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #0ea5e9;
+            --dark: #0f172a;
+            --accent: #00f5d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--dark);
+            color: white;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- Navigation --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+        .logo span { color: var(--secondary); }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #94a3b8;
+            margin-left: 2rem;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--accent); }
+
+        /* --- Hero --- */
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+            padding: 0 5%;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+        }
+
+        h1 span {
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        .cta-container { display: flex; gap: 1.5rem; }
+
+        .btn {
+            text-decoration: none;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-outline {
+            border: 2px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .btn:hover { transform: translateY(-5px); }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        /* --- Features --- */
+        section { padding: 8rem 5%; }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 3rem;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .card:hover { background: rgba(255,255,255,0.05); }
+
+        .card h3 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent); }
+
+        /* --- Animations --- */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating { animation: float 6s ease-in-out infinite; }
+
+        footer { text-align: center; padding: 4rem; opacity: 0.5; font-size: 0.8rem; }
+
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Vision<span>ID</span></div>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/services">Services</a>
+        <a href="#how">How it Works</a>
+        <a href="/admin">Admin</a>
+    </div>
+</nav>
+
+<header>
+    <div class="floating" style="font-size: 4rem; margin-bottom: 2rem;">👤</div>
+    <h1>Secure. Contactless. <span>Intelligent.</span></h1>
+    <p class="subtitle">Vision ID transforms employee authentication with state-of-the-art AI-powered facial recognition for the modern enterprise.</p>
+    <div class="cta-container">
+        <a href="/start_demo" class="btn btn-primary">Start Live Demo</a>
+        <a href="/services" class="btn btn-outline">Explore Services</a>
+    </div>
+</header>
+
+<section id="how">
+    <h2 class="section-title">How It Works</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>01. Detection</h3>
+            <p>Our Neural Network locates faces in the video stream with millisecond precision, even in challenging lighting.</p>
+        </div>
+        <div class="card">
+            <h3>02. Feature Extraction</h3>
+            <p>We analyze 128+ unique biometric facial landmarks to create a mathematical map of the face.</p>
+        </div>
+        <div class="card">
+            <h3>03. Matching</h3>
+            <p>Vectorized encodings are securely matched against your encrypted employee database in the cloud.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; 2024 Vision ID Biometric Solutions. All Rights Reserved.</p>
+</footer>
+
+</body>
+</html>

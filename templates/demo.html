@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Face Detection Demo</title>
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+
+<div class="navbar">
+<a href="/">Home</a>
+<a href="/how_it_works">How it Works</a>
+<a href="/admin">Admin</a>
+</div>
+
+<div class="container" style="text-align: center;">
+
+<h1>Live Face Detection Demo</h1>
+
+<p>Allow camera access to start real-time browser-based face detection.</p>
+
+<div class="camera-container" style="position: relative; width: 320px; height: 240px; margin: 2rem auto; border: 2px solid #2563eb; border-radius: 12px; overflow: hidden; background: #0f172a;">
+    <video id="video" width="320" height="240" autoplay playsinline style="position: absolute; top:0; left:0; width: 100%; height: 100%; transform: scaleX(-1); object-fit: cover;"></video>
+    <canvas id="canvas" width="320" height="240" style="position: absolute; top:0; left:0; width: 100%; height: 100%; transform: scaleX(-1);"></canvas>
+</div>
+
+<button id="start-btn" class="btn" onclick="startWebDemo()" style="cursor: pointer; padding: 0.8rem 2rem;">Start Web Demo</button>
+<p id="status-text" style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">Camera is off</p>
+
+</div>
+
+<script>
+    let video = document.getElementById("video");
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d");
+    let startBtn = document.getElementById("start-btn");
+    let statusText = document.getElementById("status-text");
+    let running = false;
+    let streamObj = null;
+    let animationFrameId = null;
+
+    function startWebDemo() {
+        if (running) {
+            // Stop Demo
+            running = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            if (streamObj) {
+                streamObj.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            startBtn.innerText = "Start Web Demo";
+            statusText.innerText = "Camera is off";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
+        statusText.innerText = "Starting camera...";
+        
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: 320,
+                height: 240,
+                facingMode: "user"
+            }
+        })
+        .then(stream => {
+            video.srcObject = stream;
+            streamObj = stream;
+            running = true;
+            startBtn.innerText = "Stop Web Demo";
+            statusText.innerText = "Demo running - scanning faces...";
+            
+            // Start loop
+            animationFrameId = requestAnimationFrame(processFrame);
+        })
+        .catch(err => {
+            console.error("Error accessing camera:", err);
+            statusText.innerText = "Error starting camera: " + err.message;
+        });
+    }
+
+    let lastScanTime = 0;
+    const scanInterval = 250; // Milliseconds between API queries (4 FPS is excellent for demo and light on server)
+
+    function processFrame(timestamp) {
+        if (!running) return;
+
+        if (timestamp - lastScanTime > scanInterval) {
+            lastScanTime = timestamp;
+
+            // Render camera frame onto helper canvas to export base64 image
+            let tempCanvas = document.createElement("canvas");
+            tempCanvas.width = 320;
+            tempCanvas.height = 240;
+            let tempCtx = tempCanvas.getContext("2d");
+            tempCtx.drawImage(video, 0, 0, 320, 240);
+            
+            let base64Image = tempCanvas.toDataURL("image/jpeg", 0.7);
+
+            fetch("/detect_face_api", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ image: base64Image })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!running) return;
+
+                // Clear overlays
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (data.status === "success" && data.faces) {
+                    ctx.strokeStyle = "#00f5d4"; // Premium glow color
+                    ctx.lineWidth = 3;
+                    
+                    data.faces.forEach(face => {
+                        const width = face.right - face.left;
+                        const height = face.bottom - face.top;
+                        
+                        ctx.strokeRect(face.left, face.top, width, height);
+                        
+                        ctx.fillStyle = "rgba(0, 245, 212, 0.1)";
+                        ctx.fillRect(face.left, face.top, width, height);
+                    });
+                    
+                    if (data.faces.length > 0) {
+                        statusText.innerText = `Detected ${data.faces.length} face(s)`;
+                    } else {
+                        statusText.innerText = "No face detected";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Detection error:", err);
+            });
+        }
+
+        animationFrameId = requestAnimationFrame(processFrame);
+    }
+</script>
+
+</body>
+</html>
