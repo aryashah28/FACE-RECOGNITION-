@@ -21,6 +21,19 @@ load_dotenv()
 DB_PATH = os.getenv("DATABASE_PATH", "database.db")
 DATASET_PATH = os.getenv("DATASET_PATH", "dataset")
 
+# --- Debugging file paths on Render ---
+print("--- RENDER DEPLOY FILE DEBUG ---")
+try:
+    print("Current Working Directory:", os.getcwd())
+    print("Files in Root:", os.listdir("."))
+    if os.path.exists("templates"):
+        print("templates folder exists! Contents:", os.listdir("templates"))
+    else:
+        print("ERROR: templates folder does not exist in root!")
+except Exception as e:
+    print("Debug print failed:", str(e))
+print("--------------------------------")
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback_weak_key_do_not_use")
 csrf = CSRFProtect(app)
