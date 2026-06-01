@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionID – Dashboard</title>
+
+    <!-- Modern Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS RESET & BASE STYLES */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --background: #f8fafc;
+            --surface: rgba(255, 255, 255, 0.82);
+            --border: rgba(255, 255, 255, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white; /* Keep background white */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+                url('/static/images/background.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        /* SOFT AI LIGHT EFFECT */
+        .ai-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.03), transparent 70%);
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        /* SUBTLE AI GRID WITH ANIMATION */
+        .ai-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
+            background-size: 80px 80px;
+            pointer-events: none;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 80px 80px; }
+        }
+
+        /* SCANNING BEAM ANIMATION */
+        .scan-beam {
+            position: fixed;
+            top: -100px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(to bottom, 
+                transparent, 
+                rgba(37, 99, 235, 0.05) 50%, 
+                transparent);
+            z-index: -1;
+            animation: scan 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { top: -20%; }
+            50% { top: 100%; }
+            100% { top: -20%; }
+        }
+
+        /* FLOATING PARTICLES */
+        .particle {
+            position: fixed;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-50px) translateX(30px); }
+        }
+
+        /* NAVIGATION BAR (GLASSMORPHISM) */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 4rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            z-index: 100;
+            position: sticky;
+            top: 0;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: -0.7px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-brand span {
+            color: var(--primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+            object-fit: cover;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .logout-btn {
+            padding: 0.6rem 1.25rem;
+            background: #fef2f2;
+            color: #dc2626;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid #fee2e2;
+        }
+
+        .logout-btn:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5rem 2rem;
+            z-index: 1;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 5rem;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -2px;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #1e3a8a, var(--primary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+
+        /* ACTION CARDS */
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: white;
+            box-shadow: 
+                0 20px 25px -5px rgba(37, 99, 235, 0.1),
+                0 10px 10px -5px rgba(37, 99, 235, 0.04);
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+
+        .card-icon {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            width: 60px;
+            height: 60px;
+            background: #eff6ff;
+            border-radius: 18px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1) rotate(4deg);
+            background: var(--primary);
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .card-desc {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* RESPONSIVE FIXES */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem 2rem;
+            }
+
+            .hero-title {
+                font-size: 3rem;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- AI BACKGROUND EFFECTS -->
+    <div class="ai-glow"></div>
+    <div class="ai-grid"></div>
+    <div class="scan-beam"></div>
+    
+    <!-- Floating Particles -->
+    <div class="particle" style="width: 10px; height: 10px; top: 15%; left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 15px; height: 15px; top: 40%; left: 85%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 8px; height: 8px; top: 70%; left: 20%; animation-delay: 4s;"></div>
+    <div class="particle" style="width: 12px; height: 12px; top: 80%; left: 70%; animation-delay: 1s;"></div>
+    <div class="particle" style="width: 6px; height: 6px; top: 20%; left: 60%; animation-delay: 3s;"></div>
+
+    <!-- NAVIGATION TOP -->
+    <nav class="navbar">
+        <a href="/home" class="nav-brand">
+            <!-- SVG Icon -->
+            <svg xmlns="http://www.w3.org/2000/ বাতাসে" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                style="color: #2563eb;">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 9v0"></path>
+                <path d="M15 12v0"></path>
+                <path d="M12 15v0"></path>
+                <path d="M9 12v0"></path>
+            </svg>
+            <span>Vision</span>ID
+        </a>
+        <div class="nav-actions">
+            {% if profile_pic %}
+                <a href="/employee_dashboard">
+                    <img src="/dataset/{{ profile_pic }}" class="nav-avatar" alt="Avatar">
+                </a>
+            {% endif %}
+            <a href="/services" class="nav-link">Services</a>
+            <a href="/logout" class="logout-btn">Log Out</a>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-content">
+
+        <section class="hero">
+            <h1 class="hero-title">Welcome to <span>VisionID</span></h1>
+            <p class="hero-subtitle">
+                Secure, contactless, and intelligent identity verification system.<br>Access your administrative tools
+                below.
+            </p>
+        </section>
+
+        <div class="dashboard-grid">
+
+            <!-- CARD: INDIVIDUAL DASHBOARD -->
+            <a href="/employee_dashboard" class="card">
+                <div class="card-icon">👤</div>
+                <h2 class="card-title">My Individual Dashboard</h2>
+                <p class="card-desc">View your personal profile, account settings, and verified identity details.</p>
+            </a>
+
+            <!-- CARD 1 -->
+            <a href="/services" class="card">
+                <div class="card-icon">🔐</div>
+                <h2 class="card-title">Biometric Services</h2>
+                <p class="card-desc">Explore our leading liveness detection, deepfake protection, and face recognition
+                    solutions.</p>
+            </a>
+
+            <!-- CARD 2 -->
+            <a href="/how_it_works" class="card">
+                <div class="card-icon">📖</div>
+                <h2 class="card-title">How it Works</h2>
+                <p class="card-desc">Review the operational guide and learn how the facial recognition system functions.
+                </p>
+            </a>
+
+            <!-- CARD 3 -->
+            <a href="/start_demo" class="card">
+                <div class="card-icon">🎬</div>
+                <h2 class="card-title">Live Demo</h2>
+                <p class="card-desc">Start a live facial recognition demonstration with real-time bounding boxes.</p>
+            </a>
+
+            <!-- CARD 4: DEPARTMENTS -->
+            <a href="/department" class="card">
+                <div class="card-icon">🏢</div>
+                <h2 class="card-title">Department Portal</h2>
+                <p class="card-desc">Access department-specific information for HR, Finance, Operations, and Technical
+                    sectors.</p>
+            </a>
+
+            <!-- ADMIN FEATURES -->
+            {% if session['user'] and session['user'].lower() == 'admin' %}
+            <!-- CARD 3 -->
+            <a href="/admin" class="card">
+                <div class="card-icon">⚙️</div>
+                <h2 class="card-title">Admin Console</h2>
+                <p class="card-desc">View and manage daily attendance records and system logs across your workforce.</p>
+            </a>
+
+            <!-- CARD 4 -->
+            <a href="/register" class="card">
+                <div class="card-icon">➕</div>
+                <h2 class="card-title">Register User</h2>
+                <p class="card-desc">Add a new employee to the database and capture their facial encodings for login.
+                </p>
+            </a>
+            {% endif %}
+
+        </div>
+
+    </main>
+    
+    <script>
+        // Inactivity Timer: Redirect to logout after 1 minute of no activity
+        (function() {
+            let timeout;
+            const inactivityLimit = 60000; // 60 seconds
+
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(logout, inactivityLimit);
+            }
+
+            function logout() {
+                console.log("Inactivity detected. Redirecting to logout...");
+                window.location.href = '/logout';
+            }
+
+            // Events that reset the timer
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            
+            events.forEach(function(name) {
+                document.addEventListener(name, resetTimer, true);
+            });
+
+            // Initial start
+            resetTimer();
+        })();
+    </script>
+
+</body>
+
+</html>

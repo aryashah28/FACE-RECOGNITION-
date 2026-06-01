@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>How it works</title>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+margin:0;
+
+background:linear-gradient(
+135deg,
+#eef2f7,
+#dbeafe,
+#f0f9ff
+);
+
+color:#1a1a1a;
+overflow-x:hidden;
+}
+
+/* SUBTLE GRID BACKGROUND */
+body::after{
+content:"";
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+background:
+linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+
+background-size:40px 40px;
+z-index:-1;
+}
+
+@keyframes scan{
+0%{ top:0; }
+100%{ top:100%; }
+}
+
+/* TITLE */
+h1{
+margin-top:40px;
+font-size:38px;
+color:#1f2937;
+letter-spacing:1px;
+}
+
+/* PIPELINE */X
+.pipeline{
+display:flex;
+justify-content:flex-start;
+align-items:center;
+margin-top:40px;
+gap:15px;
+
+/* IMPORTANT */
+flex-wrap:nowrap;
+overflow-x:auto;
+padding:10px 20px;
+
+/* smooth scrolling */
+scroll-behavior:smooth;
+}
+
+/* optional: hide scrollbar (clean look) */
+.pipeline::-webkit-scrollbar{
+display:none;
+}
+
+/* STEP CARDS */
+.step{
+padding:15px 25px;
+background:rgba(255,255,255,0.9);
+border-radius:10px;
+cursor:pointer;
+box-shadow:0 3px 8px rgba(0,0,0,0.2);
+transition:0.3s;
+font-size:16px;
+backdrop-filter:blur(6px);
+}
+
+.step:hover{
+background:#007BFF;
+color:rgb(255, 255, 255);
+transform:scale(1.05);
+}
+
+/* BLUR EFFECT */
+.blur{
+filter:blur(6px);
+pointer-events:none;
+user-select:none;
+}
+
+/* OVERLAY */
+.overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+z-index:5;
+display:none;
+}
+
+.overlay.show{
+display:block;
+}
+
+/* MODAL DESCRIPTION */
+.description{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+z-index:10;
+width:50%;
+
+background:rgba(255,255,255,0.95);
+padding:30px;
+
+border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+
+display:none;
+}
+
+.description.show{
+display:block;
+animation:fade 0.3s ease;
+}
+
+@keyframes fade{
+from{opacity:0; transform:translate(-50%,-40%);}
+to{opacity:1; transform:translate(-50%,-50%);}
+}
+
+/* BUTTON */
+.btn{
+margin-top:20px;
+padding:10px 20px;
+font-size:14px;
+cursor:pointer;
+border:none;
+border-radius:4px;
+background:#007BFF;
+color:white;
+}
+
+.btn:hover{
+background:#0056b3;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="particles-js"></div>
+<div class="scan-line"></div>
+
+<h1>HOW THE SYSTEM WORKS</h1>
+
+<div class="pipeline">
+
+<div class="step" onclick="showStep(1)">📷 Camera</div>
+<div class="arrow">⬇</div>
+
+<div class="step" onclick="showStep(2)">👤 Face Detection</div>
+<div class="arrow">⬇</div>
+
+<div class="step" onclick="showStep(3)">🔬 Feature Extraction</div>
+<div class="arrow">⬇</div>
+
+<div class="step" onclick="showStep(4)">🧠 Face Encoding</div>
+<div class="arrow">⬇</div>
+
+<div class="step" onclick="showStep(5)">🗄 Database Matching</div>
+<div class="arrow">⬇</div>
+
+<div class="step" onclick="showStep(6)">✅ Authentication & Attendance</div>
+
+</div>
+
+<div id="overlay" class="overlay"></div>
+<div id="desc" class="description"></div>
+
+<br>
+
+<a href="/start_demo">
+<button class="btn">▶ Try Live Detection</button>
+</a>
+
+<br>
+
+<a href="/home">
+<button class="btn">Back to Home</button>
+</a>
+
+<script>
+
+function showStep(step){
+
+let text="";
+
+if(step==1){
+text="<h2>CAMERA INPUT</h2>\
+<p>The system begins by accessing the user's webcam to capture live video in real time. This video stream is continuously divided into individual frames, which act as static images for processing. Each frame is then forwarded to the backend system for further analysis. Proper lighting, camera angle, and resolution play an important role in ensuring accurate face detection and recognition in later stages.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+if(step==2){
+text="<h2>FACE DETECTION</h2>\
+<p>In this stage, the system uses computer vision algorithms such as Haar Cascades or deep learning-based models to detect human faces within each frame. It scans the entire image to locate facial regions and draws bounding boxes around detected faces. This step ensures that only the relevant portions of the image (i.e., faces) are passed forward, eliminating unnecessary background information and improving processing efficiency.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+if(step==3){
+text="<h2>FEATURE EXTRACTION</h2>\
+<p>Once a face is detected, the system analyzes it to identify key facial landmarks such as the eyes, eyebrows, nose, lips, and jawline. These landmarks help in understanding the geometry and structure of the face. Advanced algorithms map these points precisely, which allows the system to differentiate between individuals based on unique facial characteristics.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+if(step==4){
+text="<h2>FACE ENCODING</h2>\
+<p>After extracting facial features, the system converts them into a numerical representation known as a face encoding. This encoding is typically a fixed-length vector (commonly 128 dimensions) that uniquely represents a person’s facial structure. These encodings make it easier to compare faces mathematically rather than visually, enabling fast and accurate recognition.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+if(step==5){
+text="<h2>DATABASE MATCHING</h2>\
+<p>The generated face encoding is compared with previously stored encodings in the system’s database. The system calculates the distance or similarity between vectors to determine how closely they match. If the similarity score crosses a predefined threshold, the system identifies the person as a known individual; otherwise, it is treated as an unknown face.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+if(step==6){
+text="<h2>AUTHENTICATION & ATTENDENCE</h2>\
+<p>Once a match is confirmed, the system authenticates the identity of the user. Additional verification techniques, such as blink detection or liveness detection, may be applied to ensure that the input is from a real person and not a photo or video. After successful authentication, the system automatically records attendance with details such as name, date, and time, ensuring accuracy and preventing duplication.</p>\
+<button onclick='closeDesc()' class='btn'>Close</button>";
+}
+
+const desc=document.getElementById("desc");
+const overlay=document.getElementById("overlay");
+
+desc.innerHTML=text;
+desc.classList.add("show");
+
+document.querySelector(".pipeline").classList.add("blur");
+document.querySelector("h1").classList.add("blur");
+
+overlay.classList.add("show");
+}
+
+function closeDesc(){
+
+const desc=document.getElementById("desc");
+const overlay=document.getElementById("overlay");
+
+desc.classList.remove("show");
+
+document.querySelector(".pipeline").classList.remove("blur");
+document.querySelector("h1").classList.remove("blur");
+
+overlay.classList.remove("show");
+}
+
+</script>
+
+</body>
+</html>

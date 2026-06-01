@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometric Services - Vision ID</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/services.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body class="services-page">
+    <nav class="glass-nav">
+        <div class="logo">Vision<span>ID</span></div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/services" class="active">Services</a>
+            <a href="/admin">Admin</a>
+            <a href="/logout" class="btn-login">Logout</a>
+        </div>
+    </nav>
+
+    <header class="services-hero">
+        <div class="hero-content">
+            <h1 class="reveal-text">Leading Biometric <span>Services</span></h1>
+            <p class="fade-in">State-of-the-art security powered by artificial intelligence and computer vision.</p>
+        </div>
+        <div class="header-overlay"></div>
+    </header>
+
+    <main>
+        <!-- Liveness Detection Section -->
+        <section id="liveness" class="service-section">
+            <div class="container">
+                <div class="section-badge">Secure Access</div>
+                <h2>Liveness Detection</h2>
+                <div class="service-grid">
+                    <div class="service-content">
+                        <p class="description">
+                            Our advanced 3D liveness detection ensures that the person presented is real and physically present. 
+                            By analyzing micro-expressions, skin texture, and depth, we distinguish between a live human and high-resolution photos, 
+                            video replays, or complex masks.
+                        </p>
+                    </div>
+                    <div class="service-visual video-box" onclick="openModal()">
+                        <div class="video-placeholder">
+                            <img src="/static/images/liveness_detection_viz_1775042242552.png" alt="Liveness Detection Visualization" class="viz-img">
+                            <div class="play-overlay">
+                                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                                <span>Watch Explainer</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deepfake Detection Section -->
+        <section id="deepfake" class="service-section alternate">
+            <div class="container">
+                <div class="section-badge highlight">AI Guard</div>
+                <h2>Who Is Real?</h2>
+                <div class="service-grid reverse">
+                    <div class="service-content">
+                        <h3>Deepfake Detection</h3>
+                        <p class="description">
+                            In an era of hyper-realistic AI-generated media, Vision ID identifies the subtle inconsistencies 
+                            that even the most advanced GANs (Generative Adversarial Networks) leave behind. 
+                            Our "Who Is Real" engine protects your platforms from identity fraud and digital impersonation.
+                        </p>
+                        <div class="animation-desc">
+                            <div class="scanner-line"></div>
+                            <div class="face-mosaic">
+                                <div class="block"></div>
+                                <div class="block"></div>
+                                <div class="block"></div>
+                                <div class="block"></div>
+                            </div>
+                            <span>Analyzing pixel continuity & digital fingerprints...</span>
+                        </div>
+                    </div>
+                    <div class="service-visual">
+                        <div class="viz-container">
+                            <img src="/static/images/deepfake_detection_viz_1775042264799.png" alt="Deepfake Detection" class="viz-img floating">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Photo Verify Section -->
+        <section id="photo-verify" class="service-section">
+            <div class="container">
+                <div class="section-badge success">ID Matching</div>
+                <h2>Photo Verify</h2>
+                <div class="service-grid">
+                    <div class="service-content">
+                        <p class="description">
+                            Instantly compare a live selfie against government-issued documentation or historical records. 
+                            Photo Verify uses cross-spectral matching to ensure the highest confidence levels even with 
+                            low-quality source images or aging photos.
+                        </p>
+                        <div class="matching-animation">
+                            <div class="face-card source">
+                                <div class="id-overlay">ID</div>
+                            </div>
+                            <div class="connector">
+                                <div class="dot"></div>
+                            </div>
+                            <div class="face-card target">
+                                <div class="live-overlay">LIVE</div>
+                            </div>
+                            <div class="check-mark">✓ Match Found 99.8%</div>
+                        </div>
+                    </div>
+                    <div class="service-visual">
+                        <div class="viz-container">
+                             <img src="/static/images/photo_verify_viz_1775042519217.png" alt="Photo Verification" class="viz-img pulse-glow">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Face Recognition Section -->
+        <section id="face-recognition" class="service-section alternate">
+            <div class="container">
+                <div class="section-badge warning">Enterprise Identification</div>
+                <h2>Face Recognition</h2>
+                <div class="service-grid reverse">
+                    <div class="service-content">
+                        <p class="description">
+                            Scalable identification in high-traffic environments. Vision ID's recognition engine 
+                            can process hundreds of faces simultaneously, matching them against databases of millions 
+                            in milliseconds for seamless attendance, security, and personalized experiences.
+                        </p>
+                        <div class="grid-animation">
+                             <div class="node-group">
+                                 <div class="node highlight"></div>
+                                 <div class="node-label">User 01</div>
+                             </div>
+                             <div class="node-group">
+                                 <div class="node"></div>
+                                 <div class="node-label">User 02</div>
+                             </div>
+                             <div class="node-group">
+                                 <div class="node highlight"></div>
+                                 <div class="node-label">User 03</div>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="service-visual">
+                        <div class="viz-container">
+                             <img src="/static/images/face_recognition_viz_new_1775042544380.png" alt="Face Recognition" class="viz-img neon-border">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Session Logout Section -->
+        <section id="end-session" class="service-section">
+            <div class="container text-center">
+                <div class="logout-card floating">
+                    <h3>Finished Explore Services?</h3>
+                    <p>Securely end your session and return to the main portal.</p>
+                    <a href="/logout" class="btn-logout-main">Logout Session</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div style="padding:56.25% 0 0 0;position:relative;">
+                <iframe src="https://player.vimeo.com/video/510815124?h=2e2832822d&autoplay=1&badge=0&autopause=0&player_id=0&app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;" title="Biometric Liveness Detection"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Vision ID Biometric Solutions. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // Simple scroll reveal
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.service-section');
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if(sectionTop < window.innerHeight * 0.85) {
+                    section.classList.add('reveal');
+                }
+            });
+        });
+        window.dispatchEvent(new Event('scroll'));
+
+        // Modal logic
+        function openModal() {
+            document.getElementById('videoModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('videoModal').style.display = 'none';
+            // Stop video
+            const iframe = document.querySelector('iframe');
+            const src = iframe.src;
+            iframe.src = src;
+        }
+
+        // Close on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('videoModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+    <script>
+        // Inactivity Timer: Redirect to logout after 1 minute of no activity
+        (function() {
+            let timeout;
+            const inactivityLimit = 60000; // 60 seconds
+
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(logout, inactivityLimit);
+            }
+
+            function logout() {
+                console.log("Inactivity detected. Redirecting to logout...");
+                window.location.href = '/logout';
+            }
+
+            // Events that reset the timer
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            
+            events.forEach(function(name) {
+                document.addEventListener(name, resetTimer, true);
+            });
+
+            // Initial start
+            resetTimer();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Camera Login</title>
+</head>
+
+<body>
+
+<h2>Face Login</h2>
+
+<video id="video" width="400" autoplay></video>
+<button onclick="capture()">Capture</button>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+const video = document.getElementById('video');
+
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+    video.srcObject = stream;
+});
+
+function capture() {
+
+    const canvas = document.getElementById("canvas");
+    const context = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video, 0, 0);
+
+    const image = canvas.toDataURL("image/jpeg");
+
+    fetch("/verify_face", {
+        method: "POST",
+        body: JSON.stringify({image:image}),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message)
+    })
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - VisionID</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e3a8a;
+            --background: #f1f5f9;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.03) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 3rem 1.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+
+        .back-link:hover {
+            transform: translateX(-4px);
+        }
+
+        /* PROFILE CARD */
+        .profile-card {
+            background: var(--surface);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            height: 180px;
+            position: relative;
+        }
+
+        .profile-pic-container {
+            position: absolute;
+            bottom: -70px;
+            left: 50px;
+            width: 160px;
+            height: 160px;
+            border-radius: 28px;
+            border: 6px solid white;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-pic-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            transition: 0.3s;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .profile-pic-container:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        .profile-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            color: #1e3a8a;
+            font-size: 3rem;
+            font-weight: 900;
+        }
+
+        .profile-body {
+            padding: 90px 50px 50px 50px;
+        }
+
+        .user-name {
+            font-size: 2.25rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .user-title {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            border-top: 1px solid var(--border);
+            padding-top: 2.5rem;
+        }
+
+        .info-box {
+            padding: 1.25rem;
+            background: #f8fafc;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s;
+        }
+
+        .info-box:hover {
+            border-color: var(--primary);
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.5rem 1rem;
+            background: #eff6ff;
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-top: 1rem;
+            border: 1px solid #dbeafe;
+        }
+
+        .logout-link {
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .logout-link a {
+            color: #ef4444;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: opacity 0.2s;
+        }
+
+        .logout-link a:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <a href="/home" class="back-link">← Back to Dashboard</a>
+            <h1 style="font-size: 2rem; color: #0f172a;">My Individual Profile</h1>
+        </header>
+
+        <div class="profile-card">
+            <div class="profile-header"></div>
+
+            <div class="profile-pic-container">
+                {% if user_data.profile_pic %}
+                <img src="/dataset/{{ user_data.profile_pic }}" alt="Profile Image" id="profile-img">
+                {% else %}
+                <div class="profile-placeholder">{{ user_data.name[0] }}</div>
+                {% endif %}
+                <div class="upload-overlay" onclick="document.getElementById('photo-input').click()">
+                    <span>📷 Change</span>
+                </div>
+                <input type="file" id="photo-input" style="display: none;" accept="image/*" onchange="previewPhoto()">
+            </div>
+
+            <div id="upload-controls"
+                style="display: none; padding: 20px; text-align: center; background: #f0fdf4; border-top: 1px solid #dcfce7;">
+                <p style="font-size: 0.85rem; color: #166534; margin-bottom: 10px;">New photo selected! Ready to update?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="uploadPhoto()"
+                        style="padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Confirm
+                        Update</button>
+                    <button onclick="cancelUpload()"
+                        style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </div>
+
+            <div class="profile-body">
+                <h2 class="user-name">{{ user_data.name }}</h2>
+                <p class="user-title">{{ user_data.designation }}</p>
+
+                <div class="verified-badge">Verified Employee</div>
+
+                <div class="details-grid">
+                    <div class="info-box">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value">{{ user_data.email }}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Employee ID</div>
+                        <div class="info-value">{{ user_data.employee_id }}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Department</div>
+                        <div class="info-value">{{ user_data.department }}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Contact Number</div>
+                        <div class="info-value">{{ user_data.phone }}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Base Location (Registration)</div>
+                        <div class="info-value">{{ user_data.base_location }}</div>
+                    </div>
+                    <div class="info-box" style="background: #f0f9ff; border-color: #bae6fd;">
+                        <div class="info-label" style="color: #0369a1;">Monthly Salary</div>
+                        <div class="info-value" style="color: #0c4a6e; font-size: 1.25rem;">
+                            ₹{{ user_data.salary }}
+                            {% if user_data.reimbursement > 0 %}
+                            <span style="font-size: 0.75rem; color: #0284c7; margin-left:10px;">(+ ₹{{
+                                user_data.reimbursement }} Reimb.)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Current Access (Live)</div>
+                        <div class="info-value" style="color: #2563eb; font-size: 0.95rem;">
+                            📍 {{ user_data.current_location }} (IP: {{ user_data.live_ip }})
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logout-link">
+            <a href="/logout">Log out for security</a>
+        </div>
+    </div>
+
+    <script>
+        let originalPhotoSrc = document.getElementById('profile-img') ? document.getElementById('profile-img').src : null;
+
+        function previewPhoto() {
+            const input = document.getElementById('photo-input');
+            const img = document.getElementById('profile-img');
+            const controls = document.getElementById('upload-controls');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (img) {
+                        img.src = e.target.result;
+                    } else {
+                        // If there was a placeholder, we need to create an img tag
+                        const container = document.querySelector('.profile-pic-container');
+                        const placeholder = container.querySelector('.profile-placeholder');
+                        if (placeholder) {
+                            const newImg = document.createElement('img');
+                            newImg.id = 'profile-img';
+                            newImg.src = e.target.result;
+                            newImg.alt = 'Profile Image';
+                            container.insertBefore(newImg, placeholder);
+                            placeholder.style.display = 'none';
+                        }
+                    }
+                    controls.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function cancelUpload() {
+            const img = document.getElementById('profile-img');
+            const controls = document.getElementById('upload-controls');
+            const input = document.getElementById('photo-input');
+            const placeholder = document.querySelector('.profile-placeholder');
+
+            if (originalPhotoSrc) {
+                img.src = originalPhotoSrc;
+            } else if (placeholder) {
+                if (img) img.remove();
+                placeholder.style.display = 'flex';
+            }
+
+            input.value = '';
+            controls.style.display = 'none';
+        }
+
+        function uploadPhoto() {
+            const input = document.getElementById('photo-input');
+            if (!input.files || !input.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+
+            fetch('/upload_photo', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Photo updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Upload failed: ' + data.message);
+                    }
+                })
+                .catch(err => alert('Error: ' + err));
+        }
+    </script>
+
+    <script>
+        // Inactivity Timer: Redirect to logout after 1 minute of no activity
+        (function() {
+            let timeout;
+            const inactivityLimit = 60000; // 60 seconds
+
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(logout, inactivityLimit);
+            }
+
+            function logout() {
+                console.log("Inactivity detected. Redirecting to logout...");
+                window.location.href = '/logout';
+            }
+
+            // Events that reset the timer
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            
+            events.forEach(function(name) {
+                document.addEventListener(name, resetTimer, true);
+            });
+
+            // Initial start
+            resetTimer();
+        })();
+    </script>
+
+</body>
+
+</html>

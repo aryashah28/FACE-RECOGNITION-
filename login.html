@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Employee Login</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <style>
+        /* Modern Inter Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e3a8a;
+            --background: #0f172a;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.15) 0%, transparent 40%);
+            color: white;
+            overflow: hidden;
+        }
+
+        /* MAIN LAYOUT */
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            height: 640px;
+            display: flex;
+            background: var(--surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* LEFT PANEL */
+        .left-panel {
+            flex: 1.2;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            padding: 3rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .left-panel h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: -1rem;
+        }
+
+        /* CAMERA */
+        .camera-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            filter: brightness(1.1);
+        }
+
+        /* FACE CIRCLE */
+        .face-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 180px;
+            height: 180px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+        }
+
+        .face-circle::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            bottom: -4px;
+            left: -4px;
+            border: 2px solid white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: scannerPulse 2s linear infinite;
+        }
+
+        @keyframes scannerPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        /* FACE BOX */
+        #face-box {
+            position: absolute;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            display: none;
+            z-index: 5;
+            transition: all 0.1s ease;
+        }
+
+        /* BUTTONS */
+        .face-btn,
+        .card button {
+            width: 100%;
+            max-width: 300px;
+            padding: 1rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.4);
+        }
+
+        .face-btn:hover,
+        .card button:hover {
+            background: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.5);
+        }
+
+        /* STATUS & GUIDE */
+        #status {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+        }
+
+        #guide {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-top: 5px;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #arrows {
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+
+        /* RIGHT PANEL */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 340px;
+            text-align: left;
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .card p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        /* INPUTS */
+        input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+            outline: none;
+        }
+
+        /* DIVIDER */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: 1rem;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- LEFT (FACE LOGIN) -->
+        <div class="left-panel">
+
+            <h2>AI Face Login</h2>
+
+            <div class="camera-box">
+                <video id="video" autoplay></video>
+                <div class="face-circle"></div>
+                <div id="face-box"></div>
+            </div>
+
+            <div id="guide">Position your face</div>
+            <div id="arrows"></div>
+
+            <div id="status" style="margin-top: 10px; font-weight: bold; color: #94a3b8;">Ready to scan</div>
+
+            <button class="face-btn" onclick="startFaceLogin()" style="margin-top: 15px;">Start Face Login</button>
+
+        </div>
+
+        <!-- RIGHT (FORM LOGIN) -->
+        <div class="right-panel">
+
+            <div class="card">
+                <h2>Welcome Back 👋</h2>
+                <p>Secure Employee Access</p>
+
+                <form id="idLoginForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="text" name="employee_id" placeholder="Employee ID" required>
+                    <input type="password" name="password" placeholder="Password" required>
+
+                    <button type="submit">Login</button>
+                </form>
+
+                <a href="/reset_password"
+                    style="display:block; margin-top:15px; color:#94a3b8; text-decoration:none; font-size: 0.85rem; transition: color 0.3s;"
+                    onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">Forgot or Reset
+                    Password?</a>
+
+                <div class="divider">OR USE FACE LOGIN</div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        let video = document.getElementById("video");
+        let scanning = false;
+        let interval = null;
+
+        // 🎥 Start Camera (HIGH QUALITY)
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: "user"
+            }
+        })
+            .then(stream => {
+                video.srcObject = stream;
+            });
+
+        // 📸 FACE LOGIN LOOP
+        function startFaceLogin() {
+
+            if (scanning) return;
+            scanning = true;
+
+            document.getElementById("status").innerText = "Scanning face...";
+
+            function captureFrame() {
+                if (!scanning) return;
+
+                let canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                let ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0);
+
+                let image = canvas.toDataURL("image/jpeg", 0.8);
+
+                fetch("/face_login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ image: image })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        let status = document.getElementById("status");
+                        let guide = document.getElementById("guide");
+                        let arrows = document.getElementById("arrows");
+
+                        if (data.status === "success") {
+                            status.innerText = "✅ Verified!";
+                            guide.innerText = "Welcome " + data.name;
+                            scanning = false;
+
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 1000);
+                        }
+                        else {
+                            if (data.status === "fail") {
+                                status.innerText = data.message;
+                                status.style.color = "#ef4444";
+
+                                if (data.message.toLowerCase().includes("recognized")) {
+                                    guide.innerText = "Face not in database";
+                                }
+                            }
+
+                            // Trigger next frame after a short delay
+                            if (scanning) {
+                                setTimeout(captureFrame, 300);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Face login error:", err);
+                        if (scanning) setTimeout(captureFrame, 1000);
+                    });
+            }
+
+            captureFrame();
+        }
+
+        document.getElementById("idLoginForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            let jsonData = {};
+            formData.forEach((value, key) => { jsonData[key] = value });
+
+            fetch("/login_id", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(jsonData)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        window.location.href = data.redirect;
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => alert("Error logging in: " + err));
+        });
+
+    </script>
+
+</body>
+
+</html>

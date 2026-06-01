@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Capture Face</h2>
+
+    <img src="{{ url_for('video_feed') }}" width="640">
+    
+    <br><br>
+
+    <button onclick="capture()">Capture Angle</button>
+    <button onclick="stop()">Stop & Exit</button>
+
+    <script>
+        function capture() {
+            window.location.href = "/capture_image";
+        }
+        function stop() {
+            window.location.href = "/stop";
+        }
+    </script>
+</body>
+</html>
