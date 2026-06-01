@@ -17,6 +17,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Configurable paths for database and dataset (facilitates Persistent Volumes)
+DB_PATH = os.getenv("DATABASE_PATH", "database.db")
+DATASET_PATH = os.getenv("DATASET_PATH", "dataset")
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback_weak_key_do_not_use")
 csrf = CSRFProtect(app)
@@ -64,7 +68,7 @@ app.config.update(
 # ---------------- DATABASE ---------------- #
 
 def init_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -204,7 +208,7 @@ def get_location_from_ip(ip):
 known_encodings = []
 known_names = []
 known_dataset_files = set()
-dataset_path = "dataset"
+dataset_path = DATASET_PATH
 
 def load_dataset():
     global known_encodings, known_names, known_dataset_files
@@ -234,7 +238,7 @@ load_dataset()
 # ---------------- ATTENDANCE ---------------- #
 
 def mark_attendance(name, status="Login"):
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     now = datetime.datetime.now()
@@ -278,7 +282,7 @@ def home():
     if username.lower() != "admin":
         ip = get_client_ip()
         location = get_location_from_ip(ip)
-        conn = sqlite3.connect("database.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("UPDATE employees SET current_location=?, last_ip=? WHERE name=?", (location, ip, username))
         conn.commit()
@@ -350,7 +354,7 @@ def employee_dashboard():
         location = get_location_from_ip(ip)
         
         # Load admin details from DB
-        conn = sqlite3.connect("database.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT salary, reimbursement, employee_id, email, department, designation, phone, base_location FROM employees WHERE LOWER(name)='admin'", )
         admin_db = cursor.fetchone()
@@ -383,7 +387,7 @@ def employee_dashboard():
     ip = get_client_ip()
     live_location = get_location_from_ip(ip)
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT name, employee_id, email, department, designation, phone, base_location, salary, reimbursement FROM employees WHERE LOWER(name)=LOWER(?)", (username,))
     user = cursor.fetchone()
@@ -432,7 +436,7 @@ def serve_dataset(filename):
 
 @app.route('/get_analytics')
 def get_analytics():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     # --- 📈 Attendance Trend (Last 7 Days) ---
@@ -472,7 +476,7 @@ def get_analytics():
 
 @app.route('/get_attendance')
 def get_attendance():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT e.name, e.employee_id, e.department, e.gender, e.base_location, e.current_location, e.last_ip, 
@@ -531,7 +535,7 @@ def search_attendance():
         except:
             search_date = search_date_raw
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     employees_list = []
@@ -608,30 +612,78 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
 
-    name = request.form.get('name')
-    birthdate = request.form.get('birthdate')
-    phone = request.form.get('phone')
-    email = request.form.get('email')
-    occupation = request.form.get('occupation')
-    designation = request.form.get('designation')
-    department = request.form.get('department')
-    gender = request.form.get('gender')
-    base_location = request.form.get('base_location', 'AHMEDABAD')
-    password = request.form.get('password')
+    if request.is_json:
+        data = request.json
+        name = data.get('name')
+        birthdate = data.get('birthdate')
+        phone = data.get('phone')
+        email = data.get('email')
+        occupation = data.get('occupation')
+        designation = data.get('designation')
+        department = data.get('department')
+        gender = data.get('gender')
+        base_location = data.get('base_location', 'AHMEDABAD')
+        password = data.get('password')
+        image_data_url = data.get('image')
+    else:
+        name = request.form.get('name')
+        birthdate = request.form.get('birthdate')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+        occupation = request.form.get('occupation')
+        designation = request.form.get('designation')
+        department = request.form.get('department')
+        gender = request.form.get('gender')
+        base_location = request.form.get('base_location', 'AHMEDABAD')
+        password = request.form.get('password')
+        image_data_url = None
 
     if not name or not password or not birthdate or not phone or not email or not occupation or not designation or not department or not gender:
-        return "All required fields are missing", 400
+        return jsonify({"status": "fail", "message": "All required fields are missing"}), 400
 
     # Validate birthdate (must not be futuristic, max 2026)
     try:
         birth_year = int(birthdate.split('-')[0])
         if birth_year > 2026:
-            return "Invalid birthdate (Future years not allowed)", 400
+            return jsonify({"status": "fail", "message": "Invalid birthdate (Future years not allowed)"}), 400
     except:
         pass
 
+    # Save photo first if base64 provided
+    if image_data_url:
+        try:
+            image_data = image_data_url.split(",")[1]
+            decoded = base64.b64decode(image_data)
+            np_img = np.frombuffer(decoded, np.uint8)
+            frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+            
+            if frame is None:
+                return jsonify({"status": "fail", "message": "Invalid image data"}), 400
+                
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            face_locations = face_recognition.face_locations(rgb)
+            
+            if not face_locations:
+                return jsonify({"status": "fail", "message": "No face detected in the photo. Please align your face and try again."}), 400
+                
+            # Crop face (first one found)
+            (top, right, bottom, left) = face_locations[0]
+            face_img = frame[top:bottom, left:right]
+            
+            if not os.path.exists(dataset_path):
+                os.makedirs(dataset_path)
+                
+            file_name = f"{name}_1.jpg"
+            file_path = os.path.join(dataset_path, file_name)
+            cv2.imwrite(file_path, face_img)
+            
+        except Exception as e:
+            return jsonify({"status": "fail", "message": f"Error capturing face: {str(e)}"}), 500
+    else:
+        return jsonify({"status": "fail", "message": "Face snapshot is required to register."}), 400
+
     # Auto-generate Employee ID
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM employees")
     emp_count = cursor.fetchone()[0]
@@ -641,8 +693,6 @@ def register():
     ip = get_client_ip()
     location = get_location_from_ip(ip)
 
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
     # Unique employee_id and password for new user
     hashed_password = generate_password_hash(password)
     try:
@@ -653,52 +703,16 @@ def register():
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        return "This Employee ID or Email is already registered", 400
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({"status": "fail", "message": "This Employee ID or Email is already registered"}), 400
     conn.close()
-
-    if not os.path.exists(dataset_path):
-        os.makedirs(dataset_path)
-
-    cap = cv2.VideoCapture(0)
-    count = 1
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            continue
-
-        frame = cv2.resize(frame, (640, 480))
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        face_locations = face_recognition.face_locations(rgb)
-
-        for (top, right, bottom, left) in face_locations:
-            face_img = frame[top:bottom, left:right]
-
-            file_name = f"{name}_{count}.jpg"
-            file_path = os.path.join(dataset_path, file_name)
-
-            cv2.imwrite(file_path, face_img)
-            count += 1
-
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-
-        cv2.imshow("Register Face", frame)
-
-        if count >= 2:
-            break
-
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
 
     load_dataset()
 
     return jsonify({
         "status": "success",
-        "message": f"{name} registered successfully"
+        "message": f"{name} registered successfully. Employee ID: {employee_id}"
     })
 
 @app.route('/edit_employee', methods=['POST'])
@@ -721,7 +735,7 @@ def edit_employee():
     if not old_name:
         return jsonify({"status": "fail", "message": "Missing name"}), 400
         
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE employees 
@@ -751,7 +765,7 @@ def login_id():
     if not emp_id or not password:
         return jsonify({"status": "fail", "message": "ID and Password are required"})
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     # Handle both Admin and Employee via DB (Case-Insensitive)
@@ -809,7 +823,7 @@ def reset_password():
     if not employee_id or not current_password or not new_password:
         return jsonify({"status": "fail", "message": "All fields are required"})
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     # Check if the person attempting reset is the admin
@@ -930,7 +944,7 @@ def get_dept_info():
     requested_dept = data.get("department")
     username = session["user"]
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     # Get information about the current logged-in user
@@ -1085,31 +1099,46 @@ def run_vapt_scan():
 
 @app.route('/start_demo')
 def start_demo():
+    return render_template('demo.html')
 
-    camera = cv2.VideoCapture(0)
+@app.route('/detect_face_api', methods=['POST'])
+def detect_face_api():
+    if not request.json or 'image' not in request.json:
+        return jsonify({"status": "fail", "message": "Missing image data"}), 400
 
-    while True:
-        ret, frame = camera.read()
-        if not ret:
-            continue
+    data = request.json['image']
+    try:
+        image_data = data.split(",")[1]
+        decoded = base64.b64decode(image_data)
+        np_img = np.frombuffer(decoded, np.uint8)
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return jsonify({"status": "fail", "message": "Invalid image"}), 400
 
+        # Resize to match demo requirements and speed up processing
         frame = cv2.resize(frame, (320, 240))
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         face_locations = face_recognition.face_locations(rgb)
-
+        
+        faces = []
         for top, right, bottom, left in face_locations:
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+            faces.append({
+                "top": int(top),
+                "right": int(right),
+                "bottom": int(bottom),
+                "left": int(left)
+            })
 
-        cv2.imshow("Face Detection Demo", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    camera.release()
-    cv2.destroyAllWindows()
-
-    return redirect('/')
+        return jsonify({
+            "status": "success",
+            "faces": faces,
+            "width": 320,
+            "height": 240
+        })
+    except Exception as e:
+        return jsonify({"status": "fail", "message": str(e)}), 500
 
 
 # ---------------- CONFIG MANAGEMENT ---------------- #
