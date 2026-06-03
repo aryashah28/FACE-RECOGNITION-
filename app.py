@@ -20,6 +20,8 @@ load_dotenv()
 # Configurable paths for database and dataset (facilitates Persistent Volumes)
 DB_PATH = os.getenv("DATABASE_PATH", "database.db")
 DATASET_PATH = os.getenv("DATASET_PATH", "dataset")
+if not os.path.exists(DATASET_PATH) and os.path.exists("Dataset"):
+    DATASET_PATH = "Dataset"
 
 # --- Debugging file paths on Render ---
 import sys
@@ -83,6 +85,13 @@ app.config.update(
 # ---------------- DATABASE ---------------- #
 
 def init_db():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir and not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir)
+        except Exception as e:
+            print(f"Warning: Could not create directory {db_dir}: {e}")
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -237,14 +246,17 @@ def load_dataset():
             if file.endswith((".jpg", ".png", ".jpeg")):
                 known_dataset_files.add(file)
 
-                path = os.path.join(dataset_path, file)
-                image = face_recognition.load_image_file(path)
-                encodings = face_recognition.face_encodings(image)
+                try:
+                    path = os.path.join(dataset_path, file)
+                    image = face_recognition.load_image_file(path)
+                    encodings = face_recognition.face_encodings(image)
 
-                if encodings:
-                    known_encodings.append(encodings[0])
-                    name = os.path.splitext(file)[0].split("_")[0]
-                    known_names.append(name)
+                    if encodings:
+                        known_encodings.append(encodings[0])
+                        name = os.path.splitext(file)[0].split("_")[0]
+                        known_names.append(name)
+                except Exception as e:
+                    print(f"Error loading face encoding for {file}: {e}")
 
     print("Dataset loaded:", known_names)
 
