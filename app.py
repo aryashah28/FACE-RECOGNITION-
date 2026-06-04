@@ -157,6 +157,10 @@ def init_db():
     except sqlite3.OperationalError: pass
     try: cursor.execute("ALTER TABLE attendance ADD COLUMN location TEXT")
     except sqlite3.OperationalError: pass
+    try: cursor.execute("ALTER TABLE employees ADD COLUMN face_encoding TEXT")
+    except sqlite3.OperationalError: pass
+    try: cursor.execute("ALTER TABLE employees ADD COLUMN face_image TEXT")
+    except sqlite3.OperationalError: pass
 
     # --- Ensure Admin exists ---
     cursor.execute("SELECT id FROM employees WHERE name='admin' OR name='ADMIN'")
@@ -234,6 +238,103 @@ known_names = []
 known_dataset_files = set()
 dataset_path = DATASET_PATH
 
+def get_profile_pic_filename(username):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT face_image FROM employees WHERE LOWER(name)=LOWER(?)", (username,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0]:
+            return f"{username}_1.jpg"
+    except Exception as e:
+        print(f"Error checking profile pic in DB: {e}")
+
+    # Fallback to disk
+    if os.path.exists(dataset_path):
+        for file in os.listdir(dataset_path):
+            if file.lower().startswith(f"{username.lower()}_") and file.lower().endswith((".jpg", ".png", ".jpeg")):
+                return file
+    return None
+
+def migrate_dataset_to_db():
+    if not os.path.exists(dataset_path):
+        return
+
+    print("Running database face migration from disk...")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    for file in os.listdir(dataset_path):
+        if file.lower().endswith((".jpg", ".png", ".jpeg")):
+            name = os.path.splitext(file)[0].split("_")[0]
+            
+            # Check if user exists in db
+            cursor.execute("SELECT id, face_encoding, face_image FROM employees WHERE LOWER(name)=LOWER(?)", (name,))
+            user = cursor.fetchone()
+            
+            if user:
+                user_id, existing_encoding, existing_image = user
+                if not existing_encoding or not existing_image:
+                    try:
+                        path = os.path.join(dataset_path, file)
+                        
+                        # Get face encoding
+                        image = face_recognition.load_image_file(path)
+                        encodings = face_recognition.face_encodings(image)
+                        
+                        # Get base64 image data
+                        with open(path, "rb") as img_f:
+                            img_base64 = base64.b64encode(img_f.read()).decode("utf-8")
+                        
+                        if encodings:
+                            encoding_json = json.dumps(encodings[0].tolist())
+                            cursor.execute(
+                                "UPDATE employees SET face_encoding=?, face_image=? WHERE id=?",
+                                (encoding_json, img_base64, user_id)
+                            )
+                            print(f"Migrated face for user: {name}")
+                        else:
+                            cursor.execute(
+                                "UPDATE employees SET face_image=? WHERE id=?",
+                                (img_base64, user_id)
+                            )
+                            print(f"Migrated image only (encoding failed) for user: {name}")
+                    except Exception as e:
+                        print(f"Error migrating face for {file}: {e}")
+            else:
+                try:
+                    path = os.path.join(dataset_path, file)
+                    image = face_recognition.load_image_file(path)
+                    encodings = face_recognition.face_encodings(image)
+                    
+                    with open(path, "rb") as img_f:
+                        img_base64 = base64.b64encode(img_f.read()).decode("utf-8")
+                    
+                    if encodings:
+                        encoding_json = json.dumps(encodings[0].tolist())
+                        
+                        # Generate employee ID
+                        cursor.execute("SELECT COUNT(*) FROM employees")
+                        emp_count = cursor.fetchone()[0]
+                        employee_id = f"EMP-{101 + emp_count}"
+                        if name.lower() == "admin":
+                            employee_id = "ADMIN-001"
+                        
+                        default_pass = "admin" if name.lower() == "admin" else name.lower()
+                        hashed_password = generate_password_hash(default_pass)
+                        
+                        cursor.execute("""
+                            INSERT INTO employees (name, employee_id, password, face_encoding, face_image, base_location, occupation, designation, department, gender)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (name, employee_id, hashed_password, encoding_json, img_base64, "AHMEDABAD", "Employee", "Developer", "Engineering", "Male"))
+                        print(f"Created employee entry and migrated face for: {name}")
+                except Exception as e:
+                    print(f"Error creating user and migrating face for {file}: {e}")
+
+    conn.commit()
+    conn.close()
+
 def load_dataset():
     global known_encodings, known_names, known_dataset_files
 
@@ -241,24 +342,31 @@ def load_dataset():
     known_names = []
     known_dataset_files = set()
 
-    if os.path.exists(dataset_path):
-        for file in os.listdir(dataset_path):
-            if file.endswith((".jpg", ".png", ".jpeg")):
-                known_dataset_files.add(file)
+    # Automatically migrate local files to database if they exist on disk
+    try:
+        migrate_dataset_to_db()
+    except Exception as e:
+        print(f"Error running database migration: {e}")
 
-                try:
-                    path = os.path.join(dataset_path, file)
-                    image = face_recognition.load_image_file(path)
-                    encodings = face_recognition.face_encodings(image)
+    # Load from Database
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, face_encoding FROM employees WHERE face_encoding IS NOT NULL")
+        rows = cursor.fetchall()
+        for name, encoding_json in rows:
+            try:
+                encoding = np.array(json.loads(encoding_json))
+                known_encodings.append(encoding)
+                known_names.append(name)
+                known_dataset_files.add(f"{name}_1.jpg")
+            except Exception as e:
+                print(f"Error loading face encoding for {name}: {e}")
+        conn.close()
+    except Exception as e:
+        print(f"Error loading dataset from database: {e}")
 
-                    if encodings:
-                        known_encodings.append(encodings[0])
-                        name = os.path.splitext(file)[0].split("_")[0]
-                        known_names.append(name)
-                except Exception as e:
-                    print(f"Error loading face encoding for {file}: {e}")
-
-    print("Dataset loaded:", known_names)
+    print("Dataset loaded from DB:", known_names)
 
 load_dataset()
 
@@ -296,6 +404,8 @@ last_time = 0
 
 @app.route('/')
 def login():
+    if "user" in session:
+        return redirect("/home")
     return render_template("login.html")
 
 @app.route('/home')
@@ -315,12 +425,7 @@ def home():
         conn.commit()
         conn.close()
 
-    profile_pic = None
-    if os.path.exists(dataset_path):
-        for file in os.listdir(dataset_path):
-            if file.lower().startswith(f"{username.lower()}_") and file.lower().endswith((".jpg", ".png", ".jpeg")):
-                profile_pic = file
-                break
+    profile_pic = get_profile_pic_filename(username)
                 
     return render_template("home.html", profile_pic=profile_pic)
 
@@ -330,8 +435,10 @@ def how_it_works():
 
 @app.route('/admin')
 def admin():
-    if "user" not in session or session["user"].lower() != "admin":
+    if "user" not in session:
         return redirect("/")
+    if session["user"].lower() != "admin":
+        return redirect("/home")
     
     # Get current admin info
     ip = get_client_ip()
@@ -348,8 +455,10 @@ def admin():
 
 @app.route('/vapt')
 def vapt_dashboard():
-    if "user" not in session or session["user"].lower() != "admin":
+    if "user" not in session:
         return redirect("/")
+    if session["user"].lower() != "admin":
+        return redirect("/home")
     return render_template("vapt.html")
 
 @app.route('/services')
@@ -387,13 +496,7 @@ def employee_dashboard():
         admin_db = cursor.fetchone()
         conn.close()
 
-        # Look for admin's profile picture
-        profile_pic = None
-        if os.path.exists(dataset_path):
-            for file in os.listdir(dataset_path):
-                if file.startswith("admin_") and file.endswith((".jpg", ".png", ".jpeg")):
-                    profile_pic = file
-                    break
+        profile_pic = get_profile_pic_filename("admin")
 
         return render_template("employee_dashboard.html", user_data={
             "name": "Administrator",
@@ -428,12 +531,7 @@ def employee_dashboard():
         return redirect("/home")
 
     # Look for profile picture in dataset
-    profile_pic = None
-    if os.path.exists(dataset_path):
-        for file in os.listdir(dataset_path):
-            if file.lower().startswith(f"{username.lower()}_") and file.lower().endswith((".jpg", ".png", ".jpeg")):
-                profile_pic = file
-                break
+    profile_pic = get_profile_pic_filename(username)
 
     user_data = {
         "name": user[0],
@@ -452,11 +550,27 @@ def employee_dashboard():
 
     return render_template("employee_dashboard.html", user_data=user_data)
 
-from flask import send_from_directory
+from flask import send_from_directory, Response
 @app.route('/dataset/<path:filename>')
 def serve_dataset(filename):
     if "user" not in session:
         return "Unauthorized", 401
+    
+    # Try serving from Database first
+    try:
+        username = filename.split('_')[0].split('.')[0]
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT face_image FROM employees WHERE LOWER(name)=LOWER(?)", (username,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row and row[0]:
+            image_data = base64.b64decode(row[0])
+            return Response(image_data, mimetype='image/jpeg')
+    except Exception as e:
+        print(f"Error serving image from DB for {filename}: {e}")
+        
     return send_from_directory(dataset_path, filename)
 
 # ---------------- ATTENDANCE APIs ---------------- #
@@ -480,9 +594,8 @@ def get_analytics():
     present_total = cursor.fetchone()[0]
     
     # Total possible: Employees * Days in current month passed so far
-    employee_count = 0
-    if os.path.exists(dataset_path):
-        employee_count = len([f for f in os.listdir(dataset_path) if f.endswith((".jpg", ".png", ".jpeg"))])
+    cursor.execute("SELECT COUNT(*) FROM employees WHERE face_encoding IS NOT NULL")
+    employee_count = cursor.fetchone()[0]
     
     day_of_month = datetime.datetime.now().day
     total_possible = max(1, employee_count * day_of_month)
@@ -674,6 +787,9 @@ def register():
         pass
 
     # Save photo first if base64 provided
+    face_encoding_json = None
+    face_image_base64 = None
+    file_path = None
     if image_data_url:
         try:
             image_data = image_data_url.split(",")[1]
@@ -690,13 +806,22 @@ def register():
             if not face_locations:
                 return jsonify({"status": "fail", "message": "No face detected in the photo. Please align your face and try again."}), 400
                 
-            if not os.path.exists(dataset_path):
-                os.makedirs(dataset_path)
-                
-            file_name = f"{name}_1.jpg"
-            file_path = os.path.join(dataset_path, file_name)
-            # Save the full frame to allow face_recognition to reliably detect and encode the face
-            cv2.imwrite(file_path, frame)
+            encodings = face_recognition.face_encodings(rgb, face_locations)
+            if not encodings:
+                return jsonify({"status": "fail", "message": "Encoding failed. Please align your face and try again."}), 400
+            
+            face_encoding_json = json.dumps(encodings[0].tolist())
+            face_image_base64 = image_data
+
+            # Try saving file locally (optional fallback/cache)
+            try:
+                if not os.path.exists(dataset_path):
+                    os.makedirs(dataset_path)
+                file_name = f"{name}_1.jpg"
+                file_path = os.path.join(dataset_path, file_name)
+                cv2.imwrite(file_path, frame)
+            except Exception as disk_err:
+                print(f"Warning: Could not save face snapshot to disk: {disk_err}")
             
         except Exception as e:
             return jsonify({"status": "fail", "message": f"Error capturing face: {str(e)}"}), 500
@@ -718,13 +843,13 @@ def register():
     hashed_password = generate_password_hash(password)
     try:
         cursor.execute("""
-            INSERT INTO employees (name, employee_id, password, birthdate, phone, email, occupation, designation, department, gender, base_location, current_location, last_ip) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, employee_id, hashed_password, birthdate, phone, email, occupation, designation, department, gender, base_location, location, ip))
+            INSERT INTO employees (name, employee_id, password, birthdate, phone, email, occupation, designation, department, gender, base_location, current_location, last_ip, face_encoding, face_image) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, employee_id, hashed_password, birthdate, phone, email, occupation, designation, department, gender, base_location, location, ip, face_encoding_json, face_image_base64))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        if os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
         return jsonify({"status": "fail", "message": "This Employee ID or Email is already registered"}), 400
     conn.close()
@@ -891,7 +1016,7 @@ def face_login():
 
     if not known_encodings:
         # Emergency reload if empty
-        if os.listdir(dataset_path): load_dataset()
+        load_dataset()
         if not known_encodings: return jsonify({"status": "fail", "message": "No registered users"})
 
     if not request.json or 'image' not in request.json:
@@ -1077,21 +1202,56 @@ def upload_photo():
     if file and file.filename.lower().endswith(('.jpg', '.png', '.jpeg')):
         username = session["user"]
         
-        # Save consistently as {username}_1.jpg for main display
-        filename = f"{username}_1.jpg"
-        filepath = os.path.join(dataset_path, filename)
-        
-        # Delete existing ones to avoid confusion
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        try:
+            # Read file bytes
+            file_bytes = file.read()
             
-        file.save(filepath)
-        
-        # Reload dataset so face recognition works with new photo if applicable
-        load_dataset()
-        
-        return jsonify({"status": "success", "message": "Profile photo updated!"})
-    
+            # Compute face encoding
+            np_img = np.frombuffer(file_bytes, np.uint8)
+            frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+            
+            face_encoding_json = None
+            if frame is not None:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                face_locations = face_recognition.face_locations(rgb)
+                if face_locations:
+                    encodings = face_recognition.face_encodings(rgb, face_locations)
+                    if encodings:
+                        face_encoding_json = json.dumps(encodings[0].tolist())
+            
+            # Base64 encode the file bytes
+            face_image_base64 = base64.b64encode(file_bytes).decode('utf-8')
+            
+            # Save to Database
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            if face_encoding_json:
+                cursor.execute("UPDATE employees SET face_encoding=?, face_image=? WHERE LOWER(name)=LOWER(?)", (face_encoding_json, face_image_base64, username))
+            else:
+                cursor.execute("UPDATE employees SET face_image=? WHERE LOWER(name)=LOWER(?)", (face_image_base64, username))
+            conn.commit()
+            conn.close()
+            
+            # Optionally save file to local disk (if it succeeds, no problem if it fails on read-only/ephemeral storage)
+            try:
+                if not os.path.exists(dataset_path):
+                    os.makedirs(dataset_path)
+                filename = f"{username}_1.jpg"
+                filepath = os.path.join(dataset_path, filename)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                with open(filepath, "wb") as f:
+                    f.write(file_bytes)
+            except Exception as disk_err:
+                print(f"Warning: Could not save photo to disk: {disk_err}")
+            
+            # Reload dataset so face recognition works with new photo if applicable
+            load_dataset()
+            
+            return jsonify({"status": "success", "message": "Profile photo updated!"})
+        except Exception as e:
+            return jsonify({"status": "fail", "message": f"Error updating photo: {str(e)}"}), 500
+            
     return jsonify({"status": "fail", "message": "Invalid file type. Only JPG, PNG, JPEG allowed."})
 
 import subprocess
